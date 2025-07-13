@@ -1,6 +1,5 @@
 package ru.yandex.config;
 
-import lombok.Getter;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,18 +7,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
-public class KafkaTopicConfig {
+public class KafkaTopicConfig { // Загрузка имен и создание топиков
     @Value("${spring.kafka.topic.message}")
-    public String messageTopic;
+    private String messageTopic;
 
     @Value("${spring.kafka.topic.blocklist}")
-    public String blockListTopic;
+    private String blockListTopic;
 
     @Value("${spring.kafka.topic.censure}")
-    public String censureTopic;
+    private String censureTopic;
 
     @Value("${spring.kafka.topic.filtered}")
-    public String filteredTopic;
+    private String filteredTopic;
 
     @Bean
     public NewTopic messagesTopic() {

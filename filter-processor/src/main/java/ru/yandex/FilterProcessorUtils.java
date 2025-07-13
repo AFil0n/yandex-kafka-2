@@ -31,11 +31,12 @@ import java.util.Properties;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FilterProcessorUtils {
+public class FilterProcessorUtils { //Фильтрация
 
     @Value("${spring.kafka.topic.filtered}")
     private String TOPIC_NAME = "filtered";
 
+    // Запуск службы фитрации
     public void runFilterProcessor() {
         Properties properties = new Properties();
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "message-filter-processor");

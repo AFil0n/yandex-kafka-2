@@ -14,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Blocklist {
-    private Integer user; // Пользователь
+    private Integer user;
     private Set<Integer> blocklist;
 
     @Override
