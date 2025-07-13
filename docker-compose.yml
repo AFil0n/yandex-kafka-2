@@ -1,0 +1,152 @@
+version: '3.8'
+
+x-common-env: &common-env
+  KAFKA_ENABLE_KRAFT: "yes"
+  KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "0@kafka-controller-0:9093"
+  KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+  ALLOW_PLAINTEXT_LISTENER: "yes"
+  KAFKA_KRAFT_CLUSTER_ID: "JWo_Y2_0Qxejg9cntdQRpw"
+
+x-java-service: &java-service
+  build: .
+  networks:
+    - kafka-net
+  environment:
+    KAFKA_BOOTSTRAP_SERVERS: "kafka-broker-0:9092,kafka-broker-1:9092,kafka-broker-2:9092"
+  depends_on:
+    - kafka-broker-0
+    - kafka-broker-1
+    - kafka-broker-2
+
+networks:
+  kafka-net:
+    driver: bridge
+    attachable: true
+
+services:
+  # Контроллер Kafka
+  kafka-controller-0:
+    image: bitnami/kafka:3.4
+    container_name: kafka-controller-0
+    networks:
+      - kafka-net
+    environment:
+      <<: *common-env
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller
+      KAFKA_CFG_LISTENERS: "CONTROLLER://0.0.0.0:9093"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9093"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Брокер 0
+  kafka-broker-0:
+    image: bitnami/kafka:3.4
+    container_name: kafka-broker-0
+    networks:
+      - kafka-net
+    depends_on:
+      - kafka-controller-0
+    ports:
+      - "9094:9094"
+    environment:
+      <<: *common-env
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://0.0.0.0:9092,EXTERNAL://:9094"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-broker-0:9092,EXTERNAL://localhost:9094"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-verification"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Брокер 1
+  kafka-broker-1:
+    image: bitnami/kafka:3.4
+    container_name: kafka-broker-1
+    networks:
+      - kafka-net
+    depends_on:
+      - kafka-controller-0
+    ports:
+      - "9095:9095"
+    environment:
+      <<: *common-env
+      KAFKA_CFG_NODE_ID: 2
+      KAFKA_CFG_PROCESS_ROLES: broker
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://0.0.0.0:9092,EXTERNAL://:9095"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-broker-1:9092,EXTERNAL://localhost:9095"
+
+  # Брокер 2
+  kafka-broker-2:
+    image: bitnami/kafka:3.4
+    container_name: kafka-broker-2
+    networks:
+      - kafka-net
+    depends_on:
+      - kafka-controller-0
+    ports:
+      - "9096:9096"
+    environment:
+      <<: *common-env
+      KAFKA_CFG_NODE_ID: 3
+      KAFKA_CFG_PROCESS_ROLES: broker
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://0.0.0.0:9092,EXTERNAL://:9096"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-broker-2:9092,EXTERNAL://localhost:9096"
+
+  # UI для Kafka
+  kafka-ui:
+    container_name: kafka-ui
+    networks:
+      - kafka-net
+    restart: always
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka-broker-0
+      - kafka-broker-1
+      - kafka-broker-2
+    environment:
+      KAFKA_CLUSTERS_0_NAME: project-1-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-broker-0:9092,kafka-broker-1:9092,kafka-broker-2:9092
+
+  # blocklist-producer Service
+  blocklist-producer:
+    <<: *java-service
+    container_name: blocklist-producer
+    build:
+      context: ./blocklist-producer
+    ports:
+      - "8081:8080"
+
+  # censure-producer Service
+  censure-producer:
+    <<: *java-service
+    container_name: censure-producer
+    build:
+      context: ./censure-producer
+    ports:
+      - "8082:8080"
+
+  # message-producer Service
+  message-producer:
+    <<: *java-service
+    container_name: message-producer
+    build:
+      context: ./message-producer
+    ports:
+      - "8083:8080"
+
+  # message-producer Service
+  filter-processor:
+    <<: *java-service
+    container_name: filter-processor
+    build:
+      context: ./filter-processor
+    ports:
+      - "8084:8080"

@@ -1,0 +1,13 @@
+spring:
+  kafka:
+    topic:
+      message: message
+      blocklist: blocklist
+      censure: censure
+      filtered: filtered
+    bootstrap-servers: kafka-broker-0:9092,kafka-broker-1:9092,kafka-broker-2:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3

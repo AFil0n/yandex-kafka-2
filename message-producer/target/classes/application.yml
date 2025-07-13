@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    topic:
+      name: message
+  application:
+    name: message-producer
